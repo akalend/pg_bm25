@@ -1,7 +1,7 @@
-MODULES = pg_bm25
+MODULES = bm25
 
-EXTENSION = pg_bm25
-DATA = pg_bm25--0.1.sql
+EXTENSION = bm25
+DATA = bm25--0.1.sql
 PGFILEDESC = "pg_bm25 - module"
 
 

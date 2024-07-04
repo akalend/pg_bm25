@@ -1,6 +1,6 @@
 # debug extension
 comment = 'bm25  stahostic range function'
 default_version = '0.1'
-module_pathname = '$libdir/pg_bm25'
+module_pathname = '$libdir/bm25'
 relocatable = true
 trusted = true
