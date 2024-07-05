@@ -30,9 +30,9 @@ PG_FUNCTION_INFO_V1(bm25_test);
 
 typedef struct FormData_pg_bm25_wors
 {
-	Name word; 		// word   | text
-	int32 doc_id;	// doc_id | integer
+	NameData word; 		// word   | text
 	int32 id;		// id     | integer
+	int32 doc_id;	// doc_id | integer
 } FormData_pg_bm25_wors;
 
 typedef FormData_pg_bm25_wors* Form_pg_bm25_wors;
@@ -41,8 +41,8 @@ typedef FormData_pg_bm25_wors* Form_pg_bm25_wors;
 typedef enum Anum_pg_bm25_wors
 {
 	Anum_pg_bm25_words_word = 1,
+	Anum_pg_bm25_words_id,
 	Anum_pg_bm25_words_docid,
-	Anum_pg_bm25_wordid,
 	Natts_pg_bm25_words,
 } Anum_pg_bm25_wors;
 
@@ -55,8 +55,6 @@ name_to_oid(const char* name)
 
 
 
-
-
 /* the tamplate function for debuging */
 Datum
 bm25_test(PG_FUNCTION_ARGS)
@@ -65,20 +63,17 @@ bm25_test(PG_FUNCTION_ARGS)
 	IndexScanDesc scan;
 	TupleTableSlot* slot;
 	HeapTuple tup;
-	ScanKeyData skey[2];
+	ScanKeyData skey[1];
 	int32 found_doc_id = -1;
-	int32 id = 2;
+
 	// text *name =  cstring_to_text("aaaa"); 			//text_to_cstring(PG_GETARG_TEXT_P(0));
 	NameData  name;
 	Oid tbl_oid = name_to_oid(TABLE_NAME);
 	Oid idx_oid = name_to_oid(NAME_IDX_NAME);
 
 	memset(name.data, '\0', NAMEDATALEN);
-	strcpy( name.data, "aaaa" );
+	strcpy( name.data, "brat" );
 	
-
-	elog(WARNING, "table oid=%d", tbl_oid);
-	elog(WARNING, "index oid=%d", idx_oid);
 
 	rel = table_open(tbl_oid, AccessShareLock);
 	idxrel = index_open(idx_oid, AccessShareLock);
@@ -92,16 +87,14 @@ bm25_test(PG_FUNCTION_ARGS)
 				Anum_pg_bm25_words_word,  /* numeration starts from 1; idx, not rel! */
 				BTEqualStrategyNumber, F_NAMEEQ,
 				NameGetDatum(&name));
-	ScanKeyInit(&skey[1],
-				Anum_pg_bm25_words_docid,
-				BTEqualStrategyNumber, F_INT4EQ,
-				Int32GetDatum(id));
+	
 	index_rescan(scan, skey, 
 				1,    	/* key count */
 				NULL 	/* orderbys */,
 				 0 		/* norderbys */);
 
 
+	
 	slot = table_slot_create(rel, NULL);
 	while (index_getnext_slot(scan, ForwardScanDirection, slot))
 	{
@@ -111,12 +104,12 @@ bm25_test(PG_FUNCTION_ARGS)
 		tup = ExecFetchSlotHeapTuple(slot, false, &should_free);
 		if (HeapTupleIsValid(tup))
 		{
-			Name tmp;
+			
 			record = (Form_pg_bm25_wors) GETSTRUCT(tup);
-			tmp = record->word;
 
 			elog(WARNING,"is tuple free=%d ", should_free);
-			if(strcmp( tmp->data, name.data) == 0)
+			elog(WARNING,"data =%s ", record->word.data ? record->word.data : "no data");
+			if(strcmp( record->word.data, name.data) == 0)
 			{
 				found_doc_id = record->id;
 				if(should_free) heap_freetuple(tup);
